@@ -1,0 +1,35 @@
+name: Deploy automatico a Oracle ARM
+
+on:
+  push: 
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Enviar archivos al servidor de Oracle
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "."
+          target: "/home/deploy/motor-ipfs"
+
+      - name: Levantar la infraestructura con Docker
+        uses: appleboy/ssh-action@v1.0.3
+        with: 
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /home/deploy/motor-ipfs
+
+            docker compose down
+            docker compose up -d --build
+            docker image prune -f
