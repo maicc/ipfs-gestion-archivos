@@ -16,7 +16,7 @@ services:
     restart: unless-stopped
 
   go-backend: 
-    build: .
+    build: ./ipfs-gestion-archivos
     container_name: go_motor_ipfs
     ports:
       - "8080:8080"
