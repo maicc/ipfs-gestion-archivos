@@ -28,7 +28,7 @@ services:
 
   front-prueba:
     build: ./oguripfs-frontend
-    container_name: frontend_prueba
+    container_name: frontend-prueba
     ports: 
       - "80:80"
     restart: unless-stopped
