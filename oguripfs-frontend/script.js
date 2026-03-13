@@ -1,13 +1,12 @@
 
-
-
 const CHUNK_SIZE = 1 * 1024 * 1024
 
 const btn_upload = document.getElementById("btn-uploadFiles")
 const fileInput = document.getElementById("uploadFiles")
 
 const upload = async (event) => {
-    const uuid = crypto.randomUUID();
+    //const uuid = crypto.randomUUID();
+    const uuid = crypto.generarUUID();
     event.preventDefault()
     const file = fileInput.files[0];
 
@@ -52,4 +51,12 @@ const upload = async (event) => {
             return
         }
     }
+}
+
+function generarUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0;
+        var v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
 }
