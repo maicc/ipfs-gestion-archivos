@@ -291,7 +291,7 @@ func subirArchivoKuboHTTP(rutaArchivo string) (string, error) {
 }
 
 func notificarBackendTS(uuidVideo string, cidMaestro string, sizeArchivo string) error {
-	urlBackend := "http://localhost:3000/api/file/videos/confirmar-subida"
+	urlBackend := "http://oguripfs-backend:3000/api/file/videos/confirmar-subida"
 
 	payload := PayloadVideo{
 		UUID: uuidVideo,
