@@ -4,6 +4,10 @@ const CHUNK_SIZE = 1 * 1024 * 1024
 const btn_upload = document.getElementById("btn-uploadFiles")
 const fileInput = document.getElementById("uploadFiles")
 
+const baseUrl = window.location.hostname === "localhost"
+    ? 'http://localhost:8080'
+    : 'http://40.233.104.1:8080';
+
 const upload = async (event) => {
     //const uuid = crypto.randomUUID();
     const uuid = generarUUID();
@@ -33,7 +37,7 @@ const upload = async (event) => {
         formData.append('uuid-name', `${uuid}-${originalFileName}`);
         console.log(`${uuid}-${originalFileName}`)
         try {
-            const response = await fetch( "http://localhost:8080/upload" || "http://40.233.104.1:8080/upload" ,
+            const response = await fetch(`${baseUrl}/upload`,
                 {
                     method: "POST",
                     body: formData
@@ -54,7 +58,7 @@ const upload = async (event) => {
 }
 
 function generarUUID() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0;
         var v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
