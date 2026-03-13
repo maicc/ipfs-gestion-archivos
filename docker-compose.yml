@@ -10,8 +10,8 @@ services:
       - "8081:8080"
 
     volumes: 
-      - ./ipfs/ipfs_data:/data/ipfs
-      - ./ipfs/ipfs_export:/export
+      - /ipfs_data:/data/ipfs
+      - /ipfs_export:/export
 
     restart: unless-stopped
 
@@ -24,6 +24,13 @@ services:
       - IPFS_URL=http://ipfs:5001
     depends_on:
       - ipfs
+    restart: unless-stopped
+
+  front-prueba:
+    build: ./oguripfs-frontend
+    container_name: frontend_prueba
+    ports: 
+      - "80:80"
     restart: unless-stopped
 
 volumes:
