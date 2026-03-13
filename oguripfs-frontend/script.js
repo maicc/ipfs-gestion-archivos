@@ -6,7 +6,7 @@ const fileInput = document.getElementById("uploadFiles")
 
 const upload = async (event) => {
     //const uuid = crypto.randomUUID();
-    const uuid = crypto.generarUUID();
+    const uuid = generarUUID();
     event.preventDefault()
     const file = fileInput.files[0];
 
