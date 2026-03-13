@@ -33,6 +33,14 @@ services:
       - "80:80"
     restart: unless-stopped
 
+  oguripfs-backend:
+    build: ./oguripfs-backend
+    container_name: oguripfs-backend
+    ports: 
+      - "3000:3000"
+    env_file:
+      - .env
+    restart: unless-stopped
 volumes:
   ipfs_data:
   ipfs_export:

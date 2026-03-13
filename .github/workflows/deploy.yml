@@ -30,6 +30,17 @@ jobs:
           script: |
             cd /home/deploy/motor-ipfs
 
+            rm -f .env
+
+            echo "CRUST_SEED='${{ secrets.CRUST_SEED }}'" >> .env
+            echo "CRUST_RPC=${{ secrets.CRUST_RPC }}" >> .env
+            echo "IPFS_HOST=${{ secrets.IPFS_HOST }}" >> .env
+            echo "IPFS_PORT=${{ secrets.IPFS_PORT }}" >> .env
+            echo "IPFS_PROTOCOL=${{ secrets.IPFS_PROTOCOL }}" >> .env
+            echo "IPFS_TIMEOUT=${{ secrets.IPFS_TIMEOUT }}" >> .env
+            echo "PORT=${{ secrets.PORT }}" >> .env
+            echo "CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}" >> .env
+
             docker compose down
             docker compose up -d --build
             docker image prune -f
