@@ -33,7 +33,7 @@ const upload = async (event) => {
         formData.append('uuid-name', `${uuid}-${originalFileName}`);
         console.log(`${uuid}-${originalFileName}`)
         try {
-            const response = await fetch("http://localhost:8080/upload",
+            const response = await fetch("http://40.233.104.1:8080/upload",
                 {
                     method: "POST",
                     body: formData
