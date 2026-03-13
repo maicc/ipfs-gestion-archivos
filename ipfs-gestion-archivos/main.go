@@ -185,30 +185,20 @@ func emsablarArchivo(finalname string) {
 
 	}
 
-	infoArchivo, err := archivoFisico.Stat()
-	if err != nil {
-		fmt.Println("Error al obtener la información del archivo")
-		return
-	}
-
-	tamanoEnByte := infoArchivo.Size()
-
-	tamanoString := fmt.Sprintf("%d", tamanoEnByte)
-
-	fmt.Println("Tamaño final del archivo: ", tamanoString)
 	fmt.Println("1. Ensamblaje listo. Inyectando archivo individual a IPFS...")
 
-	cidIndividual, errIPFS := subirArchivoKuboHTTP(rutaCompleta)
+	respuestaKubo, errIPFS := subirArchivoKuboHTTP(rutaCompleta)
 
+	fmt.Println("Tamaño final del archivo: ", respuestaKubo.Size)
 	if errIPFS != nil {
 		fmt.Println("Fallo crítico al subir a IPFS:", errIPFS)
 		return
 	}
 
-	fmt.Println("Archivo pineado con extio. CID:", cidIndividual)
+	fmt.Println("Archivo pineado con extio. CID:", respuestaKubo)
 	fmt.Println("3. Notificando a la API en TypeScript")
 
-	errNotificacion := notificarBackendTS(finalname, cidIndividual, tamanoString)
+	errNotificacion := notificarBackendTS(finalname, respuestaKubo)
 	if errNotificacion != nil {
 		fmt.Println("Fallo de comunicación con TS:", errNotificacion)
 		return
@@ -216,9 +206,9 @@ func emsablarArchivo(finalname string) {
 
 	fmt.Println("TypeScript confirmó la recepción del CID.")
 
-	linkGateway := fmt.Sprintf("https://dweb.link/ipfs/%s, https://ipfs.io/ipfs/%s", cidIndividual, cidIndividual)
+	linkGateway := fmt.Sprintf("https://dweb.link/ipfs/%s, https://ipfs.io/ipfs/%s", respuestaKubo.Hash, respuestaKubo.Hash)
 
-	fmt.Println("Archivo pineado con éxito! CID: ", cidIndividual)
+	fmt.Println("Archivo pineado con éxito! CID: ", respuestaKubo.Hash)
 	fmt.Println("Link: ", linkGateway)
 	errLimpieza := os.RemoveAll(carpetaTemp)
 	if errLimpieza != nil {
@@ -230,8 +220,14 @@ func emsablarArchivo(finalname string) {
 
 }
 
-func subirArchivoKuboHTTP(rutaArchivo string) (string, error) {
-	urlKubo := fmt.Sprintf("%s/api/v0/add?pin=true&cid-version=1", os.Getenv("IPFS_URL"))
+func subirArchivoKuboHTTP(rutaArchivo string) (RespuestaKubo, error) {
+
+	urlbase := os.Getenv("IPFS_URL")
+	if urlbase == "" {
+		urlbase = "http://127.0.0.1:5001"
+	}
+
+	urlKubo := urlbase + "/api/v0/add?pin=true&cid-version=1"
 
 	pr, pw := io.Pipe()
 
@@ -264,7 +260,7 @@ func subirArchivoKuboHTTP(rutaArchivo string) (string, error) {
 
 	req, err := http.NewRequest("POST", urlKubo, pr)
 	if err != nil {
-		return "", fmt.Errorf("error creando petición HTTP: %v", err)
+		return RespuestaKubo{}, fmt.Errorf("error creando petición HTTP: %v", err)
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
@@ -272,31 +268,40 @@ func subirArchivoKuboHTTP(rutaArchivo string) (string, error) {
 	cliente := &http.Client{}
 	respuesta, err := cliente.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("Error contactando a Kubo %v", err)
+		return RespuestaKubo{}, fmt.Errorf("Error contactando a Kubo %v", err)
 	}
 	defer respuesta.Body.Close()
 
 	if respuesta.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("Kubo rechazó el archivo. Status: %d", respuesta.StatusCode)
+		return RespuestaKubo{}, fmt.Errorf("Kubo rechazó el archivo. Status: %d", respuesta.StatusCode)
 	}
 
 	var KuboRes RespuestaKubo
 	err = json.NewDecoder(respuesta.Body).Decode(&KuboRes)
 	if err != nil {
-		return "", fmt.Errorf("Error leyendo respuesta de Kubo: %v", err)
+		return RespuestaKubo{}, fmt.Errorf("Error leyendo respuesta de Kubo: %v", err)
 	}
 
-	return KuboRes.Hash, nil
+	fmt.Println("Información real del tamaño: ", KuboRes)
+
+	return KuboRes, nil
 
 }
 
-func notificarBackendTS(uuidVideo string, cidMaestro string, sizeArchivo string) error {
-	urlBackend := "http://oguripfs-backend:3000/api/file/videos/confirmar-subida"
+func notificarBackendTS(uuidVideo string, respuestaKubo RespuestaKubo) error {
+
+	urlBase := os.Getenv("URL_BACKEND")
+
+	if urlBase == "" {
+		urlBase = "http://localhost:3000"
+	}
+
+	urlBackend := urlBase + "/api/file/videos/confirmar-subida"
 
 	payload := PayloadVideo{
 		UUID: uuidVideo,
-		CID:  cidMaestro,
-		SIZE: sizeArchivo,
+		CID:  respuestaKubo.Hash,
+		SIZE: respuestaKubo.Size,
 	}
 
 	datosJSON, err := json.Marshal(payload)
