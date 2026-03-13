@@ -10,8 +10,8 @@ services:
       - "8081:8080"
 
     volumes: 
-      - ipfs_data:/data/ipfs
-      - ipfs_export:/export
+      - ./ipfs/ipfs_data:/data/ipfs
+      - ./ipfs/ipfs_export:/export
 
     restart: unless-stopped
 
