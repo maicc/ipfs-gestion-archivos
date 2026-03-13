@@ -22,6 +22,7 @@ services:
       - "8080:8080"
     environment:
       - IPFS_URL=http://ipfs:5001
+      - URL_BACKEND=http://oguripfs-backend:3000
     depends_on:
       - ipfs
     restart: unless-stopped
