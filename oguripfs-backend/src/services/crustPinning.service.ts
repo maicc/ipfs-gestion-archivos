@@ -114,7 +114,7 @@ export async function placeStorageOrder(
                     success: true,
                     cid,
                     fileSize,
-                    txHash: blockHash,
+                    blockHash,
                     message: `Orden de almacenamiento enviada. Block: ${blockHash}`
                 });
             }
