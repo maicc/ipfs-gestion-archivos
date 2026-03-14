@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction, request } from 'express';
 import { uploadFormService } from '../services/uploadForm.service.js';
 import type { ChunkInfo, FileUploadPayload } from '../types/index.js';
-import { placeStorageOrder } from '../services/crustPinning.service.js';
+import { getOrderState, placeStorageOrder } from '../services/crustPinning.service.js';
 export async function uploadController(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         const archivos = req.files as Express.Multer.File[] | undefined;
@@ -52,16 +52,30 @@ export async function uploadController(req: Request, res: Response, next: NextFu
 }
 
 export const confirmarSubida = async (req: Request, res: Response) => {
-    const { uuid, cid, size } = req.body;
+    console.log("BODY RECIBIDO:", req.body);
+    const {
+        uuid,
+        fileInfo: {
+            name,
+            mimeType,
+            sizeBytes,
+            cid
+        },
+        storageContract: {
+            crustStatus,
+            pinnedUntil
+        }
+    } = req.body;
 
-    if (!uuid || !cid) {
+    if (!uuid || !cid || !name || !mimeType || !crustStatus || !pinnedUntil) {
         return res.status(400).json({ error: "Faltaron datos de Go" });
     }
 
-    console.log(`Recibido desde go -> Video UUID: ${uuid} | CID: ${cid} | SIZE: ${size}`)
+    console.log(`Recibido desde go -> Video UUID: ${name} | CID: ${cid} | SIZE: ${sizeBytes}`)
+
 
     console.log('⛓️  Enviando orden a Crust Network...');
-    placeStorageOrder(cid, parseInt(size, 10))
+    placeStorageOrder(cid, parseInt(sizeBytes, 10))
         .then(() => console.log(`Orden de almacenamiento en Crust exitosa para ${cid}`))
         .catch(crustError => console.error(`Error en Crust para ${cid}:`, crustError))
 

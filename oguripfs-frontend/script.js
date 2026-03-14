@@ -4,7 +4,7 @@ const CHUNK_SIZE = 1 * 1024 * 1024
 const btn_upload = document.getElementById("btn-uploadFiles")
 const fileInput = document.getElementById("uploadFiles")
 
-const baseUrl = window.location.hostname === "localhost"
+const baseUrl = window.location.hostname === ""
     ? 'http://localhost:8080'
     : 'http://40.233.104.1:8080';
 
@@ -22,6 +22,7 @@ const upload = async (event) => {
     //btn_upload.disable = true
     const totalChunks = Math.ceil(file.size / CHUNK_SIZE)
     const originalFileName = file.name;
+    const mimeType = file.type
 
     for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
         const start = chunkIndex * CHUNK_SIZE;
@@ -34,6 +35,8 @@ const upload = async (event) => {
         formData.append('chunkIndex', chunkIndex);
         formData.append('totalChunks', totalChunks);
         formData.append('originalFileName', originalFileName);
+        formData.append('MimeType', mimeType);
+
         formData.append('uuid-name', `${uuid}-${originalFileName}`);
         console.log(`${uuid}-${originalFileName}`)
         try {

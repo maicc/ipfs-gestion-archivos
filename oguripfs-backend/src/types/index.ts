@@ -24,7 +24,9 @@ export interface CrustOrderResult {
     success: boolean;
     cid: string;
     fileSize: number;
+    txHash: string
     message: string;
+    
 }
 
 export interface UploadResponse {
