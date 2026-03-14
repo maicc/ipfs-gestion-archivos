@@ -24,7 +24,7 @@ export interface CrustOrderResult {
     success: boolean;
     cid: string;
     fileSize: number;
-    blockHash: string
+    blockHash?: string
     message: string;
     
 }
