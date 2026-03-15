@@ -38,3 +38,17 @@ export interface UploadResponse {
     ipfs?: IpfsUploadResult;
     crust?: CrustOrderResult;
 }
+
+export interface FileDataPayload {
+     uuid: string,
+        fileInfo: {
+            name:string,
+            mimeType:string,
+            sizeBytes:string,
+            cid:string
+        },
+        storageContract: {
+            crustStatus:string,
+            pinnedUntil:string
+        }
+}

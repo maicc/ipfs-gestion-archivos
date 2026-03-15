@@ -17,7 +17,7 @@ func NotificarBackendTS(uuidVideo string, originalName string, mimeType string, 
 	if urlBase == "" {
 		urlBase = "http://localhost:3000"
 	}
-	urlBackend := urlBase + "/api/file/videos/confirmar-subida"
+	urlBackend := urlBase + "/api/file/confirmar-subida"
 
 	payload := models.Payload{
 		UUID: uuidVideo,

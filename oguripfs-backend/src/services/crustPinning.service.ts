@@ -2,7 +2,7 @@ import { ApiPromise, WsProvider } from '@polkadot/api';
 import { typesBundleForPolkadot } from '@crustio/type-definitions';
 import { Keyring } from '@polkadot/keyring';
 import { config } from '../config/env.js';
-import type { CrustOrderResult } from '../types/index.js';
+import type { CrustOrderResult, FileDataPayload } from '../types/index.js';
 
 // Singleton de la conexión a Crust
 let api: ApiPromise | null = null;
@@ -45,6 +45,20 @@ export async function disconnectCrustApi(): Promise<void> {
  * @param tips - Propina extra para incentivar a los nodos (default: 0)
  * @param memo - Memo ('folder' si es carpeta, '' si es archivo)
  */
+
+export const confirmarSubida = async (fileInfo: FileDataPayload) => {
+    console.log('⛓️  Enviando orden a Crust Network...');
+    placeStorageOrder(fileInfo.fileInfo.cid, parseInt(fileInfo.fileInfo.sizeBytes, 10))
+        .then(async () => {
+            console.log(`Orden de almacenamiento en Crust exitosa para ${fileInfo.fileInfo.cid}`)
+        }
+        )
+        .catch(crustError => console.error(`Error en Crust para ${fileInfo.fileInfo.cid}:`, crustError))
+
+    return { message: "CID registrado correctamente. Procesando blockchain..." }
+
+}
+
 export async function placeStorageOrder(
     cid: string,
     fileSize: number,
@@ -138,6 +152,5 @@ export async function getOrderState(cid: string): Promise<unknown> {
     const fileInfo = await crustApi.query.market.filesV2(cid);
     const fileData = fileInfo.toJSON();
 
-    console.log('📊 Estado del archivo:', fileData);
     return fileData;
 }

@@ -1,11 +1,9 @@
 import  {Router} from "express";
-import { uploadSingle, uploadMultiple } from "../middleware/upload.middleware.js";
-import { confirmarSubida, uploadController } from "../controller/uploadForm.controller.js";
+import { confirmarSubidaController, getOrderStateController} from "../controller/crustPinning.controller.js";
 
 const router = Router();
 
-//router.post("/upload", uploadSingle, uploadController);
-router.post("/uploadMultiple", uploadMultiple, uploadController);
-router.post("/videos/confirmar-subida", confirmarSubida)
+router.post("/confirmar-subida", confirmarSubidaController)
+router.post("/getOrderStatus", getOrderStateController)
 
 export default router;

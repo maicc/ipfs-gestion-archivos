@@ -9,17 +9,6 @@ const app = express();
 
 app.use(express.json());
 
-/* 
-app.use((req, res, next) => {
-    console.log(`\n📡 [REQUEST ENTRANTE]`);
-    console.log(`Método: ${req.method}`);
-    console.log(`URL Exacta: ${req.url}`);
-    console.log(`URL Original: ${req.originalUrl}`);
-    console.log(`Body:`, req.body);
-    console.log(`-----------------------\n`);
-    next();
-});
-*/
 app.use(cors({
     origin: config.CORS_ORIGIN,
     methods: 'GET,HEAD,PUT,POST,DELETE'
