@@ -4,6 +4,9 @@ import { Keyring } from '@polkadot/keyring';
 import { config } from '../config/env.js';
 import type { CrustOrderResult, FileDataPayload } from '../types/index.js';
 
+let currentNonce: number | null = null
+let nonceMutex = Promise.resolve()
+
 // Singleton de la conexión a Crust
 let api: ApiPromise | null = null;
 
@@ -84,8 +87,12 @@ export async function placeStorageOrder(
     // 3. Firmar y enviar la transacción
     await crustApi.isReadyOrError;
 
+    const safeNonce = await getNextNonce(crustApi, krp.address);
+    console.log(`Asignando Nonce ${safeNonce} para CID ${cid}`)
+
+
     return new Promise<CrustOrderResult>((resolve, reject) => {
-        tx.signAndSend(krp, ({ events = [], status }) => {
+        tx.signAndSend(krp, {nonce: safeNonce}, ({ events = [], status }) => {
             console.log(`💸 Tx status: ${status.type}, nonce: ${tx.nonce}`);
 
             if (status.isInBlock) {
@@ -115,6 +122,7 @@ export async function placeStorageOrder(
 
                 // Si los eventos se parsearon y encontramos ExtrinsicFailed, rechazar
                 if (!eventParsingFailed && errorMsg) {
+                    currentNonce = null
                     reject(new Error(errorMsg));
                     return;
                 }
@@ -134,6 +142,7 @@ export async function placeStorageOrder(
             }
         }).catch((e: Error) => {
             console.error('❌ Error al enviar transacción a Crust:', e.message);
+           currentNonce = null;
             reject(e);
         });
     });
@@ -153,4 +162,25 @@ export async function getOrderState(cid: string): Promise<unknown> {
     const fileData = fileInfo.toJSON();
 
     return fileData;
+}
+
+const getNextNonce = (api: ApiPromise, address: string): Promise<number> =>{
+    return new Promise ((resolve)=>{
+        nonceMutex = nonceMutex.then(async ()=>{
+            if (currentNonce === null){
+                console.log(`Consultando Nonce inicial a la red para ${address}...`)
+                const nextNonce =await api.rpc.system.accountNextIndex(address);
+                currentNonce = nextNonce.toNumber()
+            }
+
+            const nonceToUse = currentNonce;
+            currentNonce++;
+
+            resolve(nonceToUse);
+        }).catch((err)=>{
+            console.error("Error en el administrador de Nonce:", err)
+            currentNonce = null;
+            throw err;
+        })
+    })
 }

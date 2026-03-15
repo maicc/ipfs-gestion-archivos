@@ -9,55 +9,63 @@ const baseUrl = window.location.hostname === ""
     : 'http://40.233.104.1:8080';
 
 const upload = async (event) => {
-    //const uuid = crypto.randomUUID();
-    const uuid = generarUUID();
-    event.preventDefault()
-    const file = fileInput.files[0];
 
-    if (!file) {
+    const files = fileInput.files;
+
+    if (!files) {
         alert("Por favor seleccione un archivo")
         return
     }
 
-    //btn_upload.disable = true
-    const totalChunks = Math.ceil(file.size / CHUNK_SIZE)
-    const originalFileName = file.name;
-    const mimeType = file.type
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i]
 
-    for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
-        const start = chunkIndex * CHUNK_SIZE;
-        const end = Math.min(start + CHUNK_SIZE, file.size)
+        //const uuid = crypto.randomUUID();
+        const uuid = generarUUID();
+        event.preventDefault()
 
-        const chunk = file.slice(start, end);
 
-        const formData = new FormData();
-        formData.append('files', chunk, originalFileName);
-        formData.append('chunkIndex', chunkIndex);
-        formData.append('totalChunks', totalChunks);
-        formData.append('originalFileName', originalFileName);
-        formData.append('MimeType', mimeType);
+        //btn_upload.disable = true
+        const totalChunks = Math.ceil(file.size / CHUNK_SIZE)
+        const originalFileName = file.name;
+        const mimeType = file.type
 
-        formData.append('uuid-name', `${uuid}-${originalFileName}`);
-        console.log(`${uuid}-${originalFileName}`)
-        try {
-            const response = await fetch(`${baseUrl}/upload`,
-                {
-                    method: "POST",
-                    body: formData
-                });
+        for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+            const start = chunkIndex * CHUNK_SIZE;
+            const end = Math.min(start + CHUNK_SIZE, file.size)
 
-            if (!response.ok) {
-                throw new Error(`El servidor rechazo el chunk ${chunkIndex}`);
+            const chunk = file.slice(start, end);
+
+            const formData = new FormData();
+            formData.append('files', chunk, originalFileName);
+            formData.append('chunkIndex', chunkIndex);
+            formData.append('totalChunks', totalChunks);
+            formData.append('originalFileName', originalFileName);
+            formData.append('MimeType', mimeType);
+
+            formData.append('uuid-name', `${uuid}-${originalFileName}`);
+            console.log(`${uuid}-${originalFileName}`)
+            try {
+                const response = await fetch(`${baseUrl}/upload`,
+                    {
+                        method: "POST",
+                        body: formData
+                    });
+
+                if (!response.ok) {
+                    throw new Error(`El servidor rechazo el chunk ${chunkIndex}`);
+                }
+
+                const result = await response.json();
+
+                console.log("feedback recibido", result)
+            } catch (err) {
+                console.log("Error en la subida", err);
+                return
             }
-
-            const result = await response.json();
-
-            console.log("feedback recibido", result)
-        } catch (err) {
-            console.log("Error en la subida", err);
-            return
         }
     }
+    console.log("Archivos subidos con exito")
 }
 
 function generarUUID() {
