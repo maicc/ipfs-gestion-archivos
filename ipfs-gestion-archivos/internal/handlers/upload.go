@@ -30,7 +30,7 @@ func ManejarUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.ParseMultipartForm(5 << 20)
+	r.ParseMultipartForm(7 << 20)
 	chunkIndex := r.FormValue("chunkIndex")
 	totalChunks := r.FormValue("totalChunks")
 	originalFileName := r.FormValue("originalFileName")
@@ -55,7 +55,13 @@ func ManejarUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	defer archivo.Close()
 
-	saveFiles(archivo, finalname, nuevoNombre)
+	err = saveFiles(archivo, finalname, nuevoNombre)
+
+	if err != nil {
+		fmt.Printf("Fallo al guardar el chunk físico: %v\n", err)
+		http.Error(w, "Error interno al guardar el archivo", http.StatusInternalServerError)
+		return
+	}
 
 	response := models.RespuestaArchivo{
 		Success: true,
@@ -78,14 +84,24 @@ func manejarCors(w http.ResponseWriter, r *http.Request, methods string) {
 	w.Header().Set("Content-Type", "application/json")
 }
 
-func saveFiles(datos io.Reader, finalName string, nombreChunks string) {
+func saveFiles(datos io.Reader, finalName string, nombreChunks string) error {
 	carpeta := "temp"
 	directorioTempUnico := path.Join(carpeta, finalName)
-	os.MkdirAll(directorioTempUnico, os.ModePerm)
+
+	if err := os.MkdirAll(directorioTempUnico, os.ModePerm); err != nil {
+		return fmt.Errorf("fallo al crear directorio temporal: %w", err)
+	}
+
 	rutaCompleta := filepath.Join(directorioTempUnico, nombreChunks)
-	archivoFisico, _ := os.Create(rutaCompleta)
+	archivoFisico, err := os.Create(rutaCompleta)
+	if err != nil {
+		return fmt.Errorf("fallo al crear el archivo físico: %w", err)
+	}
+
 	defer archivoFisico.Close()
 	io.Copy(archivoFisico, datos)
+
+	return nil
 }
 
 func ensamblarArchivo(finalname string, fileBasicInfo models.FileBasicInfo) {
@@ -105,13 +121,26 @@ func ensamblarArchivo(finalname string, fileBasicInfo models.FileBasicInfo) {
 	})
 
 	rutaCompleta := filepath.Join(carpeta, finalname)
-	archivoFisico, _ := os.Create(rutaCompleta)
+	archivoFisico, err := os.Create(rutaCompleta)
+
+	if err != nil {
+		fmt.Println("Error crítico creando el archivo final:", err)
+		return // Evitamos el panic del defer
+	}
+
 	defer archivoFisico.Close()
 
 	for _, archivoTemp := range archivos {
 		rutaCompletaTemp := filepath.Join(carpetaTemp, archivoTemp.Name())
-		parte, _ := os.Open(rutaCompletaTemp)
-		io.Copy(archivoFisico, parte)
+		parte, err := os.Open(rutaCompletaTemp)
+		if err != nil {
+			fmt.Printf("Error abriendo el chunk %s: %v\n", archivoTemp.Name(), err)
+			continue // O return, dependiendo de si quieres cancelar todo el ensamblaje
+		}
+
+		if _, err := io.Copy(archivoFisico, parte); err != nil {
+			fmt.Printf("Error copiando el chunk %s: %v\n", archivoTemp.Name(), err)
+		}
 		parte.Close()
 	}
 

@@ -1,12 +1,12 @@
 
-const CHUNK_SIZE = 1 * 1024 * 1024
+const CHUNK_SIZE = 5 * 1024 * 1024
 
 const btn_upload = document.getElementById("btn-uploadFiles")
 const fileInput = document.getElementById("uploadFiles")
 
 const baseUrl = window.location.hostname === ""
     ? 'http://localhost:8080'
-    : 'http://40.233.104.1:8080';
+    : 'https://upload.hachikuji.com';
 
 const upload = async (event) => {
 

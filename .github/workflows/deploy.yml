@@ -20,7 +20,8 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           source: "."
           target: "/home/deploy/motor-ipfs"
-
+          rm: true
+          
       - name: Levantar la infraestructura con Docker
         uses: appleboy/ssh-action@v1.0.3
         with: 
