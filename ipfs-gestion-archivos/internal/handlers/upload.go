@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"sort"
@@ -146,6 +147,14 @@ func ensamblarArchivo(finalname string, fileBasicInfo models.FileBasicInfo) {
 
 	fmt.Println("1. Ensamblaje listo. Inyectando archivo individual a IPFS...")
 
+	mimeLimpio := strings.ToLower(strings.TrimSpace(fileBasicInfo.MimeType))
+
+	if mimeLimpio == "video/mp4" || mimeLimpio == "video/x-matroska" {
+		fmt.Println("¡Es un video compatible! Mandando a la licuadora de FFmpeg...")
+		rutaCompleta = recortarVideosHLS(rutaCompleta, finalname)
+		os.RemoveAll(rutaCompleta)
+	}
+
 	// ✨ AQUI ESTÁ LA MAGIA DE LA ARQUITECTURA ✨
 	respuestaKubo, errIPFS := ipfs.SubirArchivo(rutaCompleta)
 	if errIPFS != nil {
@@ -164,4 +173,51 @@ func ensamblarArchivo(finalname string, fileBasicInfo models.FileBasicInfo) {
 	fmt.Println("3. TypeScript confirmó la recepción del CID.")
 	os.RemoveAll(carpetaTemp)
 	fmt.Println("Ensamblaje finalizado y basura temporal destruida con exito.")
+
+	// 4. ¡EL TOQUE MAESTRO! Borrar el archivo que ya está en IPFS
+	fmt.Println("Archivo subido a IPFS con éxito. Limpiando caché local...")
+	os.Remove(rutaCompleta)
+
+}
+
+func recortarVideosHLS(inputFile string, finalname string) string {
+	carpeta := "uploads"
+
+	outputDir := filepath.Join(carpeta, "optimizado-"+finalname)
+
+	error := os.MkdirAll(outputDir, os.ModePerm)
+	if error != nil {
+		fmt.Println("Error crítico creando la carpeta HLS:", error)
+		return "Error" // O maneja el error como prefieras
+	}
+
+	fmt.Println("Iniciando optimización de videos para streaming")
+
+	// 1. Extraemos solo el nombre del archivo (ej. "video.mp4")
+	nombreArchivo := filepath.Base(inputFile)
+
+	nombreSinExt := strings.TrimSuffix(nombreArchivo, filepath.Ext(nombreArchivo))
+
+	// 2. Construimos la ruta final (ej. "ruta/al/outputDir/opt_video.mp4")
+	outputFile := filepath.Join(outputDir, "opt_"+nombreSinExt+".mp4")
+
+	cmd := exec.Command("ffmpeg",
+		"-i", inputFile,
+		"-c:v", "copy", // Copia solo el video
+		"-c:a", "aac", // Traduce el audio
+		"-sn", // Destruye los subtítulos
+		"-movflags", "+faststart",
+		outputFile, // Asegúrate de que termine en .mp4
+	)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println("FFmpeg falló", err)
+	}
+	fmt.Println("Listo, video optimizado!")
+
+	return outputFile
 }
