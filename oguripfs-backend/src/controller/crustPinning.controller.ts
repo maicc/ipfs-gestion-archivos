@@ -3,38 +3,48 @@ import { getOrderState, confirmarSubida } from '../services/crustPinning.service
 import { FileDataPayload } from '../types/index.js';
 
 export const confirmarSubidaController = async (req: Request, res: Response) => {
+    console.log("Body recibido:", JSON.stringify(req.body, null, 2));
+    /* 
     const {
-        uuid,
-        fileInfo: {
+        keyR2,
+        respuestaKubo: {
             name,
-            mimeType,
-            sizeBytes,
-            cid
-        },
-        storageContract: {
-            crustStatus,
-            pinnedUntil
+            cid,
+            size
         }
     } = req.body;
 
-    if (!uuid || !cid || !name || !mimeType || !crustStatus || !pinnedUntil) {
+    if (!keyR2 || !respuestaKubo?.cid || !name || !size) {
         return res.status(400).json({ error: "Faltaron datos de Go" });
     }
 
-    const fileInfoSanitizado:FileDataPayload = {
-        uuid,
-        fileInfo: {
+    const fileInfoSanitizado: FileDataPayload = {
+       keyR2,
+        respuestaKubo: {
             name,
-            mimeType,
-            sizeBytes,
-            cid
-        },
-        storageContract: {
-            crustStatus,
-            pinnedUntil
+            cid,
+            size
         }
     }
-    console.log(`Recibido desde go -> Video UUID: ${name} | CID: ${cid} | SIZE: ${sizeBytes}`)
+        
+*/
+
+const { keyR2, respuestaKubo } = req.body;
+
+if (!keyR2 || !respuestaKubo?.hash || !respuestaKubo?.name || !respuestaKubo?.size) {
+    return res.status(400).json({ error: "Faltaron datos de Go" });
+}
+const fileInfoSanitizado: FileDataPayload = {
+    keyR2,
+    respuestaKubo: {
+        name: respuestaKubo.name,
+        hash: respuestaKubo.hash,
+        size: respuestaKubo.size
+    }
+};
+
+
+    console.log(`Recibido desde go -> Video UUID: ${respuestaKubo.name} | CID: ${respuestaKubo.hash} | SIZE: ${respuestaKubo.size}`)
 
     const respuesta = await confirmarSubida(fileInfoSanitizado)
 

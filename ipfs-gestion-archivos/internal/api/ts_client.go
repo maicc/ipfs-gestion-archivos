@@ -12,25 +12,16 @@ import (
 )
 
 // NotificarBackendTS avisa al servidor de tu amigo que la subida a IPFS terminó
-func NotificarBackendTS(uuidVideo string, originalName string, mimeType string, respuestaKubo models.RespuestaKubo) error {
+func NotificarBackendTS(keyR2 string, respuestaKubo models.RespuestaKubo) error {
 	urlBase := os.Getenv("URL_BACKEND")
 	if urlBase == "" {
 		urlBase = "http://localhost:3000"
 	}
 	urlBackend := urlBase + "/api/file/confirmar-subida"
 
-	payload := models.Payload{
-		UUID: uuidVideo,
-		FileInfo: models.FileInfo{
-			NAME:       originalName,
-			MIME_TYPE:  mimeType,
-			SIZE_BYTES: respuestaKubo.Size,
-			CID:        respuestaKubo.Hash,
-		},
-		StorageContract: models.StorageContract{
-			CRUSTSTATUS: "pending",
-			PINNEDUNTIL: "0",
-		},
+	payload := models.PayloadNew{
+		KeyR2:         keyR2,
+		RespuestaKubo: respuestaKubo,
 	}
 
 	datosJSON, err := json.Marshal(payload)

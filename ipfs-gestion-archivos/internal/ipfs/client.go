@@ -10,10 +10,11 @@ import (
 	"net/textproto"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 // SubirArchivo streamea un archivo físico directamente a tu nodo Kubo local
-func SubirArchivo(rutaArchivo string) (models.RespuestaKubo, error) {
+func SubirArchivo(archivoR2 io.Reader, nombreArchivo string) (models.RespuestaKubo, error) {
 	urlbase := os.Getenv("IPFS_URL")
 	if urlbase == "" {
 		urlbase = "http://127.0.0.1:5001"
@@ -28,20 +29,13 @@ func SubirArchivo(rutaArchivo string) (models.RespuestaKubo, error) {
 		defer pw.Close()
 		defer writer.Close()
 
-		archivo, err := os.Open(rutaArchivo)
-		if err != nil {
-			pw.CloseWithError(err)
-			return
-		}
-		defer archivo.Close()
-
-		part, err := writer.CreateFormFile("file", rutaArchivo)
+		part, err := writer.CreateFormFile("file", nombreArchivo)
 		if err != nil {
 			pw.CloseWithError(err)
 			return
 		}
 
-		_, err = io.Copy(part, archivo)
+		_, err = io.Copy(part, archivoR2)
 		if err != nil {
 			pw.CloseWithError(err)
 			return
@@ -55,7 +49,9 @@ func SubirArchivo(rutaArchivo string) (models.RespuestaKubo, error) {
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	cliente := &http.Client{}
+	cliente := &http.Client{
+		Timeout: time.Minute * 30,
+	}
 	respuesta, err := cliente.Do(req)
 	if err != nil {
 		return models.RespuestaKubo{}, fmt.Errorf("error contactando a Kubo: %v", err)

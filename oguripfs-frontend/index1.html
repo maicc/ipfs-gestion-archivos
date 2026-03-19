@@ -2,28 +2,141 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subida por Chunks (Zero-RAM)</title>
+    <title>⚡ R2 a IPFS Ultra-Fast Deploy</title>
     <style>
-        body { font-family: system-ui, sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; }
-        .box { border: 2px dashed #ccc; padding: 20px; text-align: center; margin-bottom: 20px; border-radius: 8px; }
-        progress { width: 100%; height: 25px; margin-top: 15px; }
-        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
-        button:disabled { background: #ccc; }
+        body { font-family: sans-serif; padding: 50px; text-align: center; background: #f4f4f9; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: inline-block; }
+        input, button { padding: 12px; margin: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        #status { margin-top: 20px; font-weight: bold; color: #555; white-space: pre-wrap; }
     </style>
 </head>
 <body>
-    <h2>Prueba de Subida por Chunks</h2>
+
+<div class="container">
+    <h2>Subir Anime Gigante (o cualquier archivo)</h2>
+    <p>R2 (Chunks) ➡️ Go ➡️ IPFS Web3</p>
     
-    <div class="box">
-        <input type="file" id="fileInput" accept="video/x-matroska, video/mp4, video/*">
-        <br><br>
-        <button id="uploadBtn" onclick="startUpload()">Subir a IPFS</button>
-    </div>
+    <input type="file" id="fileInput">
+    <br>
+    <button id="uploadBtn">🚀 Iniciar Subida Total</button>
 
-    <progress id="progressBar" value="0" max="100"></progress>
-    <p id="statusText">Esperando archivo...</p>
+    <div id="status">Esperando archivo...</div>
+</div>
 
-    <script src="upload.js"></script>
+<script>
+    // Configuración
+    const API_TS_URL = 'http://localhost:3000/api/file'; // URL de tu Backend TypeScript
+    const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB por pedazo (Ajusta esto si quieres)
+
+    const fileInput = document.getElementById('fileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const statusDiv = document.getElementById('status');
+
+    // Función auxiliar para actualizar el estatus en pantalla
+    const updateStatus = (text) => {
+        statusDiv.innerText = text;
+        console.log(text);
+    };
+
+    uploadBtn.addEventListener('click', async () => {
+        const file = fileInput.files[0];
+        if (!file) return alert("Por favor, selecciona un archivo primero.");
+
+        // Bloqueamos el botón para evitar desastres
+        uploadBtn.disabled = true;
+        uploadBtn.innerText = "Procesando...";
+        updateStatus("Iniciando el baile...");
+
+        try {
+            // =================================================================
+            // PASO 1: INICIAR (Llamar a TypeScript Backend)
+            // =================================================================
+            updateStatus("1/3 Preparando R2 para recibir chunks...");
+            
+            const iniciarRes = await fetch(`${API_TS_URL}/iniciar-subida`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fileName: file.name, contentType: file.type })
+            });
+            const { uploadId, keyR2 } = await iniciarRes.json();
+            
+            updateStatus(`ID de subida obtenido. Ruta: ${keyR2}\nEmpezando a partir el archivo...`);
+
+
+            // =================================================================
+            // PASO 2: SUBIR CHUNKS (Bucle mágico)
+            // =================================================================
+            const totalParts = Math.ceil(file.size / CHUNK_SIZE);
+            const uploadedParts = []; // Aquí guardaremos los ETags
+
+            for (let partNumber = 1; partNumber <= totalParts; partNumber++) {
+                updateStatus(`2/3 Subiendo parte ${partNumber} de ${totalParts}...`);
+
+                // A. Pedir URL firmada para ESTE chunk específico
+                const firmarRes = await fetch(`${API_TS_URL}/firmar-partes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keyR2, uploadId, partNumbers: [partNumber] })
+                });
+                const { partes } = await firmarRes.json();
+                const presignedUrl = partes[0].url;
+
+                // B. Cortar el archivo (Slicing)
+                const start = (partNumber - 1) * CHUNK_SIZE;
+                const end = Math.min(start + CHUNK_SIZE, file.size);
+                const chunkBlob = file.slice(start, end);
+
+                // C. SUBIR DIRECTO A CLOUDFLARE R2 (PUT request)
+                // ¡Tu server TS ni se entera de este tráfico!
+                const uploadResponse = await fetch(presignedUrl, {
+                    method: 'PUT',
+                    body: chunkBlob,
+                    headers: { 'Content-Type': file.type }
+                });
+
+                if (!uploadResponse.ok) throw new Error(`Falló la subida de la parte ${partNumber}`);
+
+                // D. LEER EL ETAG (¡VITAL!)
+                // R2 nos devuelve un header 'ETag' que es el comprobante de recibo.
+                const etag = uploadResponse.headers.get('ETag');
+                
+                // Guardamos el comprobante ordenadamente
+                uploadedParts.push({ PartNumber: partNumber, ETag: etag });
+            }
+
+            updateStatus("Todos los chunks subidos a R2 con éxito.");
+
+
+            // =================================================================
+            // PASO 3: COMPLETAR Y DISPARAR GO
+            // =================================================================
+            updateStatus("3/3 Avisando a R2 que arme el archivo y disparando motor Go...");
+
+            const completarRes = await fetch(`${API_TS_URL}/completar-subida`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ keyR2, uploadId, parts: uploadedParts })
+            });
+            const finalData = await completarRes.json();
+
+            // ¡VICTORIA!
+            updateStatus(`✅ ¡HECHO! ${finalData.mensaje}\nKey en R2: ${keyR2}`);
+            alert("¡Subida a R2 completada y Go está procesándolo hacia IPFS! Revisa la terminal de TypeScript para ver el log final.");
+
+        } catch (error) {
+            console.error("Error catastrófico:", error);
+            updateStatus(`❌ ERROR: ${error.message}`);
+            alert("Algo salió mal. Revisa la consola del navegador.");
+        } finally {
+            // Re-activamos el botón
+            uploadBtn.disabled = false;
+            uploadBtn.innerText = "🚀 Iniciar Subida Total";
+        }
+    });
+</script>
+
 </body>
 </html>

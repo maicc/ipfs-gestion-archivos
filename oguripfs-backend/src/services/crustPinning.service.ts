@@ -51,12 +51,12 @@ export async function disconnectCrustApi(): Promise<void> {
 
 export const confirmarSubida = async (fileInfo: FileDataPayload) => {
     console.log('⛓️  Enviando orden a Crust Network...');
-    placeStorageOrder(fileInfo.fileInfo.cid, parseInt(fileInfo.fileInfo.sizeBytes, 10))
+    placeStorageOrder(fileInfo.respuestaKubo.hash, parseInt(fileInfo.respuestaKubo.size, 10))
         .then(async () => {
-            console.log(`Orden de almacenamiento en Crust exitosa para ${fileInfo.fileInfo.cid}`)
+            console.log(`Orden de almacenamiento en Crust exitosa para ${fileInfo.respuestaKubo.hash}`)
         }
         )
-        .catch(crustError => console.error(`Error en Crust para ${fileInfo.fileInfo.cid}:`, crustError))
+        .catch(crustError => console.error(`Error en Crust para ${fileInfo.respuestaKubo.hash}:`, crustError))
 
     return { message: "CID registrado correctamente. Procesando blockchain..." }
 

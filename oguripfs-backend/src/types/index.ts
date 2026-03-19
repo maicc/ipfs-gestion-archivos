@@ -26,7 +26,7 @@ export interface CrustOrderResult {
     fileSize: number;
     blockHash?: string
     message: string;
-    
+
 }
 
 export interface UploadResponse {
@@ -40,15 +40,15 @@ export interface UploadResponse {
 }
 
 export interface FileDataPayload {
-     uuid: string,
-        fileInfo: {
-            name:string,
-            mimeType:string,
-            sizeBytes:string,
-            cid:string
-        },
-        storageContract: {
-            crustStatus:string,
-            pinnedUntil:string
-        }
+    keyR2: string,
+    respuestaKubo: {
+        name: string,
+        hash: string,
+        size: string
+    }
+}
+
+export interface MultipartPart {
+    PartNumber: number;
+    ETag: string;
 }

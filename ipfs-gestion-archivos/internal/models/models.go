@@ -8,9 +8,9 @@ type RespuestaArchivo struct {
 
 // RespuestaKubo es lo que nos devuelve el nodo IPFS local
 type RespuestaKubo struct {
-	Name string `json:"Name"`
-	Hash string `json:"Hash"`
-	Size string `json:"Size"`
+	Name string `json:"name"`
+	Hash string `json:"hash"`
+	Size string `json:"size"`
 }
 
 // PayloadVideo es lo que le mandamos a tu amigo en TypeScript
@@ -35,4 +35,9 @@ type StorageContract struct {
 type FileBasicInfo struct {
 	OriginalName string `json:"originalName"`
 	MimeType     string `json:"MimeType"`
+}
+
+type PayloadNew struct {
+	KeyR2         string        `json:"keyR2"`
+	RespuestaKubo RespuestaKubo `json:"respuestaKubo"`
 }
