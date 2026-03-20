@@ -1,0 +1,8 @@
+services:
+  go-backend:
+    build: ./ipfs-gestion-archivos
+    container_name: go_motor_ipfs
+    network_mode: "host"
+    env_file:
+      - .env
+    restart: unless-stopped
