@@ -177,3 +177,64 @@ func SubirCarpetaAIPFS(rutaCarpeta string) (models.RespuestaKubo, error) {
 	// Retornamos el CID maestro
 	return ultimaRespuesta, nil
 }
+
+func QuitarPin(cid string) error {
+
+	urlbase := os.Getenv("IPFS_URL")
+	if urlbase == "" {
+		urlbase = "http://127.0.0.1:5001"
+	}
+
+	urlKubo := urlbase + "/api/v0"
+
+	url := fmt.Sprintf("%s/pin/rm?arg=%s", urlKubo, cid)
+
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		return err
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("Error conectando al nodo IPFS local: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("Fallo al quitar el pin en IPFS, status %d: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	return nil
+}
+
+func EjecutarGC() error {
+
+	urlbase := os.Getenv("IPFS_URL")
+	if urlbase == "" {
+		urlbase = "http://127.0.0.1:5001"
+	}
+
+	urlKubo := urlbase + "/api/v0"
+
+	url := fmt.Sprintf("%s/repo/gc", urlKubo)
+
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		return err
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("Error ejecutando el recolector de basura : %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("Fallo al ejecutar GC, status %d: %s", resp.StatusCode, string(bodyBytes))
+	}
+	return nil
+}

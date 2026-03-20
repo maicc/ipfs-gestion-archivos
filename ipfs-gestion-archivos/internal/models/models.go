@@ -41,3 +41,7 @@ type PayloadNew struct {
 	KeyR2         string        `json:"keyR2"`
 	RespuestaKubo RespuestaKubo `json:"respuestaKubo"`
 }
+
+type OrdenExterminio struct {
+	CID string `json:"cid"`
+}

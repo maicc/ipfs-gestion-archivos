@@ -18,11 +18,9 @@ services:
   go-backend: 
     build: ./ipfs-gestion-archivos
     container_name: go_motor_ipfs
-    ports:
-      - "8080:8080"
-    environment:
-      - IPFS_URL=http://ipfs:5001
-      - URL_BACKEND=http://oguripfs-backend:3000
+    network_mode: "host"
+    env_file:
+      - .env
     depends_on:
       - ipfs
     restart: unless-stopped

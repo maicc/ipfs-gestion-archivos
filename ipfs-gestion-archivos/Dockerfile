@@ -20,6 +20,6 @@ COPY --from=builder /app/motor-ipfs .
 
 #COPY .env . 
 
-EXPOSE 8080 
+EXPOSE 8082 
 
 CMD ["./motor-ipfs"]

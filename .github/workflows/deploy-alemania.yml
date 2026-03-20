@@ -1,0 +1,48 @@
+name: Deploy Obrero Go a Alemania
+
+on:
+  push: 
+    branches:
+      - master
+    paths:
+      - 'ipfs-gestion-archivos/**' # SOLO se ejecuta si tocas el código de Go
+      - 'docker-compose.yml'
+
+jobs:
+  deploy-alemania:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Enviar archivos a Alemania
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.GERMANY_HOST }}
+          username: ${{ secrets.GERMANY_USER }}
+          key: ${{ secrets.GERMANY_SSH_KEY }}
+          source: "ipfs-gestion-archivos/,docker-compose.yml"
+          target: "/home/deploy/apps/ipfs-node"
+          rm: false # ¡NUNCA PONER EN TRUE AQUÍ! Borraría los datos del nodo IPFS
+          
+      - name: Levantar Obrero Go en Alemania
+        uses: appleboy/ssh-action@master
+        with: 
+          host: ${{ secrets.GERMANY_HOST }}
+          username: ${{ secrets.GERMANY_USER }}
+          key: ${{ secrets.GERMANY_SSH_KEY }}
+          script: |
+            cd /home/deploy/apps/ipfs-node
+            
+            # Recreamos el .env limpio
+            rm -f .env
+            echo "IPFS_URL=http://127.0.0.1:5001" >> .env
+            echo "URL_BACKEND=${{ secrets.URL_BACKEND }}" >> .env
+            echo "R2_ACCOUNT_ID=${{ secrets.R2_ACCOUNT_ID }}" >> .env
+            echo "R2_ACCESS_KEY_ID=${{ secrets.R2_ACCESS_KEY_ID }}" >> .env
+            echo "R2_SECRET_ACCESS_KEY=${{ secrets.R2_SECRET_ACCESS_KEY }}" >> .env
+            echo "R2_BUCKET_NAME=${{ secrets.R2_BUCKET_NAME }}" >> .env
+
+            # Le decimos a Docker que SOLO reconstruya el contenedor de Go, dejando a IPFS en paz
+            docker compose up -d --build go-backend
+            docker image prune -f

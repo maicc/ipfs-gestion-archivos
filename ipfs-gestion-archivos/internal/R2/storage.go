@@ -2,13 +2,16 @@ package storage
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"path"
 
 	"ipfs-gestion-archivos/internal/api"
 	"ipfs-gestion-archivos/internal/ipfs"
+	"ipfs-gestion-archivos/internal/models"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -66,7 +69,22 @@ func TransferR2ToIPFS(client *s3.Client, bucketName string, objectKey string) er
 		kuboRespuesta, err := ipfs.SubirArchivo(out.Body, nombreLimpio)
 
 		if err != nil {
-			fmt.Println("Error subiendo el archivo a ipfs")
+			fmt.Printf("Error subiendo el archivo a ipfs: %v", err)
+			return
+		}
+
+		log.Printf("Archivo subido a IPFS con éxito. CID generado: %s", kuboRespuesta)
+
+		log.Printf("Procediendo a borrar el archivo original crudo de R2: %s", objectKey)
+		_, errDel := client.DeleteObject(context.TODO(), &s3.DeleteObjectInput{
+			Bucket: aws.String(bucketName),
+			Key:    aws.String(objectKey),
+		})
+
+		if errDel != nil {
+			log.Printf("Advertencia_ No se pudo borrar el original de R2: %v", errDel)
+		} else {
+			log.Println("Archivo original EXTERMINADO de R2 exitosamente. Costos ahorrados.")
 		}
 
 		errNotificacion := api.NotificarBackendTS(objectKey, kuboRespuesta)
@@ -77,9 +95,37 @@ func TransferR2ToIPFS(client *s3.Client, bucketName string, objectKey string) er
 
 	}()
 
-	log.Printf("Iniciando transferencia hacia IPFS del archivo: %s", objectKey)
+	log.Println("Ciclo del Obrero Go finalizado para:", objectKey)
 
 	//io.Copy(io.Discard, pr)
 
 	return nil
+}
+
+func ManejarExterminio(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var body models.OrdenExterminio
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "Error leyendo el JSON", http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"Mensaje":"Orden de exterminio aceptada"}`))
+
+	go func() {
+		log.Printf("Ejecutando limpieza para el CID: %s", body.CID)
+
+		ipfs.QuitarPin(body.CID)
+
+		ipfs.EjecutarGC()
+
+		log.Println("Bloques del CID eliminados de R2. Costos de almacenamiento = $0.")
+
+	}()
+
 }
