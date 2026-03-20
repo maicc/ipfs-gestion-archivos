@@ -44,5 +44,5 @@ jobs:
             echo "R2_BUCKET_NAME=${{ secrets.R2_BUCKET_NAME }}" >> .env
 
             # Le decimos a Docker que SOLO reconstruya el contenedor de Go, dejando a IPFS en paz
-            docker compose up -d --build go-backend
+            docker compose -f docker-compose.alemania.yml up -d --build go-backend
             docker image prune -f

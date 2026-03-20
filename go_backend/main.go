@@ -21,7 +21,7 @@ func main() {
 	http.HandleFunc("/uploadR2", handlers.ManejarUploadR2(clienteR2))
 
 	// Inicia el server
-	err := http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":8082", nil)
 	if err != nil {
 		fmt.Printf("Error fatal al iniciar el servidor: %v\n", err)
 	}

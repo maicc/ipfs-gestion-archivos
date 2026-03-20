@@ -46,6 +46,6 @@ jobs:
             echo "R2_SECRET_ACCESS_KEY=${{ secrets.R2_SECRET_ACCESS_KEY }}" >> .env
             echo "R2_ACCOUNT_ID=${{ secrets.R2_ACCOUNT_ID }}" >> .env
             echo "R2_BUCKET_NAME=${{ secrets.R2_BUCKET_NAME }}" >> .env
-
+            echo "R2_BUCKET_NAME=${{ secrets.GERMANY_HOST }}" >> .env
             docker compose up -d --build oguripfs-backend # Solo reinicia este servicio
             docker image prune -f

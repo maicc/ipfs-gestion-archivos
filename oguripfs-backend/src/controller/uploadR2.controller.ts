@@ -122,11 +122,20 @@ export const completarSubidaController = async (req: Request, res: Response) => 
 
 
 
-       try {
+        try {
+
+            const baseURL = process.env.GERMANY_HOST ?
+                `http://${process.env.GERMANY_HOST}:8082`
+                : "http://localhost:8082"
+
+
             // Cambia 'localhost:8080' por la IP/URL real de tu servidor Go
-            await axios.post('http://localhost:8080/uploadR2', {
-                keyR2: keyR2 
+            await axios.post(`${baseURL}/uploadR2`, {
+                keyR2: keyR2
             });
+
+
+
             console.log("🚀 Notificación enviada a Go para transferencia a IPFS");
         } catch (errorGo) {
             // Ojo: Solo imprimimos el error, pero NO detenemos la respuesta al frontend.
@@ -136,7 +145,7 @@ export const completarSubidaController = async (req: Request, res: Response) => 
         // =========================================================
 
         // 3. Le respondemos al frontend (Usuario feliz)
-        return res.json({ 
+        return res.json({
             mensaje: "Subida completada con éxito. Procesando en la red Web3...",
             keyR2: keyR2
         });
