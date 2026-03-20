@@ -174,7 +174,7 @@ func SubirCarpetaAIPFS(rutaCarpeta string) (models.RespuestaKubo, error) {
 		ultimaRespuesta = temp // Sobrescribimos hasta quedarnos con el de la carpeta raíz
 	}
 
-	// Retornamos el CID maestro
+	// Retornamos el CID maestroo
 	return ultimaRespuesta, nil
 }
 
