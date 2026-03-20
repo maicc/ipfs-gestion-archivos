@@ -7,7 +7,7 @@ import type { CrustOrderResult, FileDataPayload } from '../types/index.js';
 let currentNonce: number | null = null
 let nonceMutex = Promise.resolve()
 
-// Singleton de la conexión a Crust
+// Singleton de la conexión a Crust a
 let api: ApiPromise | null = null;
 
 /**
