@@ -1,6 +1,6 @@
 services:
   go-backend:
-    build: ./ipfs-gestion-archivos
+    build: ./go_backend
     container_name: go_motor_ipfs
     network_mode: "host"
     env_file:
