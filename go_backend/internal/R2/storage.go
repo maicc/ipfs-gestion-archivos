@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 
 	"ipfs-gestion-archivos/internal/api"
 	"ipfs-gestion-archivos/internal/ipfs"
@@ -49,9 +51,11 @@ func InitR2Client() (*s3.Client, error) {
 
 func TransferR2ToIPFS(client *s3.Client, bucketName string, objectKey string) error {
 
-	//pr, pw := io.Pipe()
-
 	go func() {
+
+		nombreLimpio := path.Base(objectKey)
+		rutaTemporal := filepath.Join("/tmp", nombreLimpio)
+
 		out, err := client.GetObject(context.TODO(), &s3.GetObjectInput{
 			Bucket: aws.String(bucketName),
 			Key:    aws.String(objectKey),
@@ -59,17 +63,40 @@ func TransferR2ToIPFS(client *s3.Client, bucketName string, objectKey string) er
 
 		if err != nil {
 			log.Printf("Error obteniendo objeto de R2: %v", err)
-			//	pw.CloseWithError(err)
+
 			return
 		}
 
 		defer out.Body.Close()
 
-		nombreLimpio := path.Base(objectKey)
-		kuboRespuesta, err := ipfs.SubirArchivo(out.Body, nombreLimpio)
+		archivoLocal, err := os.Create(rutaTemporal)
+		if err != nil {
+			log.Printf("Error creando archivo temporal: %v", err)
+			return
+		}
+
+		log.Printf("Descargando %s a disco temporal...", nombreLimpio)
+		_, err = io.Copy(archivoLocal, out.Body)
+		archivoLocal.Close()
+		if err != nil {
+			log.Printf("Error guardando el archivo temporal: %v", err)
+			return
+		}
+
+		archivoParaIPFS, err := os.Open(rutaTemporal)
+		if err != nil {
+			log.Printf("Error abriendo archivo local para IPFS: %v", err)
+			return
+		}
+		defer archivoParaIPFS.Close()
+
+		log.Printf("Archido descargado. Iniciando inyección a IPFS...")
+		kuboRespuesta, err := ipfs.SubirArchivo(archivoParaIPFS, nombreLimpio)
+
+		os.Remove(rutaTemporal)
 
 		if err != nil {
-			fmt.Printf("Error subiendo el archivo a ipfs: %v", err)
+			fmt.Printf("Error FALTAl subiendo el archivo a ipfs: %v", err)
 			return
 		}
 
@@ -82,7 +109,7 @@ func TransferR2ToIPFS(client *s3.Client, bucketName string, objectKey string) er
 		})
 
 		if errDel != nil {
-			log.Printf("Advertencia_ No se pudo borrar el original de R2: %v", errDel)
+			log.Printf("Advertencia: No se pudo borrar el original de R2: %v", errDel)
 		} else {
 			log.Println("Archivo original EXTERMINADO de R2 exitosamente. Costos ahorrados.")
 		}
@@ -96,8 +123,6 @@ func TransferR2ToIPFS(client *s3.Client, bucketName string, objectKey string) er
 	}()
 
 	log.Println("Ciclo del Obrero Go finalizado para:", objectKey)
-
-	//io.Copy(io.Discard, pr)
 
 	return nil
 }
