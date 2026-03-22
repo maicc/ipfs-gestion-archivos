@@ -18,6 +18,8 @@ COPY package*.json ./
 
 RUN npm install --only=production
 
+RUN npm install -g @crustio/crust-cli
+
 COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000

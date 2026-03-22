@@ -3,6 +3,7 @@ import { typesBundleForPolkadot } from '@crustio/type-definitions';
 import { Keyring } from '@polkadot/keyring';
 import { config } from '../config/env.js';
 import type { CrustOrderResult, FileDataPayload } from '../types/index.js';
+import prisma from '../prisma.js';
 
 let currentNonce: number | null = null
 let nonceMutex = Promise.resolve()
@@ -51,12 +52,33 @@ export async function disconnectCrustApi(): Promise<void> {
 
 export const confirmarSubida = async (fileInfo: FileDataPayload) => {
     console.log('⛓️  Enviando orden a Crust Network...');
+
+    const ipfsObject = await prisma.ipfsObject.update({
+        where: { r2Key: fileInfo.keyR2 },
+        data: {
+            cid: fileInfo.respuestaKubo.hash,
+            sizeBytes: BigInt(parseInt(fileInfo.respuestaKubo.size, 10)),
+        },
+    });
+
+    await prisma.storageContract.create({
+        data: {
+            ipfsObjectId: ipfsObject.id,
+            crustStatus: "pending",
+            fileSizeBytes: BigInt(parseInt(fileInfo.respuestaKubo.size, 10)),
+        },
+    });
+
     placeStorageOrder(fileInfo.respuestaKubo.hash, parseInt(fileInfo.respuestaKubo.size, 10))
-        .then(async () => {
-            console.log(`Orden de almacenamiento en Crust exitosa para ${fileInfo.respuestaKubo.hash}`)
-        }
-        )
-        .catch(crustError => console.error(`Error en Crust para ${fileInfo.respuestaKubo.hash}:`, crustError))
+        .then(async (resultado) => {
+            console.log(`Orden de almacenamiento en Crust exitosa para ${fileInfo.respuestaKubo.hash}`);
+            // Guardar tx hash cuando Crust confirma
+            await prisma.storageContract.update({
+                where: { ipfsObjectId: ipfsObject.id },
+                data: { txHash: resultado.blockHash },
+            });
+        })
+        .catch(crustError => console.error(`Error en Crust para ${fileInfo.respuestaKubo.hash}:`, crustError));
 
     return { message: "CID registrado correctamente. Procesando blockchain..." }
 
@@ -92,7 +114,7 @@ export async function placeStorageOrder(
 
 
     return new Promise<CrustOrderResult>((resolve, reject) => {
-        tx.signAndSend(krp, {nonce: safeNonce}, ({ events = [], status }) => {
+        tx.signAndSend(krp, { nonce: safeNonce }, ({ events = [], status }) => {
             console.log(`💸 Tx status: ${status.type}, nonce: ${tx.nonce}`);
 
             if (status.isInBlock) {
@@ -142,7 +164,7 @@ export async function placeStorageOrder(
             }
         }).catch((e: Error) => {
             console.error('❌ Error al enviar transacción a Crust:', e.message);
-           currentNonce = null;
+            currentNonce = null;
             reject(e);
         });
     });
@@ -164,12 +186,12 @@ export async function getOrderState(cid: string): Promise<unknown> {
     return fileData;
 }
 
-const getNextNonce = (api: ApiPromise, address: string): Promise<number> =>{
-    return new Promise ((resolve)=>{
-        nonceMutex = nonceMutex.then(async ()=>{
-            if (currentNonce === null){
+const getNextNonce = (api: ApiPromise, address: string): Promise<number> => {
+    return new Promise((resolve) => {
+        nonceMutex = nonceMutex.then(async () => {
+            if (currentNonce === null) {
                 console.log(`Consultando Nonce inicial a la red para ${address}...`)
-                const nextNonce =await api.rpc.system.accountNextIndex(address);
+                const nextNonce = await api.rpc.system.accountNextIndex(address);
                 currentNonce = nextNonce.toNumber()
             }
 
@@ -177,7 +199,7 @@ const getNextNonce = (api: ApiPromise, address: string): Promise<number> =>{
             currentNonce++;
 
             resolve(nonceToUse);
-        }).catch((err)=>{
+        }).catch((err) => {
             console.error("Error en el administrador de Nonce:", err)
             currentNonce = null;
             throw err;

@@ -6,9 +6,12 @@ import (
 
 	storage "ipfs-gestion-archivos/internal/R2"
 	"ipfs-gestion-archivos/internal/handlers"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	godotenv.Load()
 	fmt.Println("🚀 Servidor IPFS-Engine iniciado en el puerto 8080...")
 
 	clienteR2, error := storage.InitR2Client()

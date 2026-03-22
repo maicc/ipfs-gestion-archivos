@@ -13,5 +13,97 @@ datasource db {
 }
 
 model User {
-  id String @id @default(uuid()) @map("user_id")
+  id                 String    @id @default(uuid()) @map("user_id")
+  username           String    @unique
+  email              String    @unique
+  password           String
+  usedStorageBytes   BigInt    @default(0) @map("used_storage_bytes")
+  plan               String    @default("free") @map("plan")
+  storageLimitsBytes BigInt    @default(21474836480) @map("storage_limit_bytes")
+  planExpiresAt      DateTime? @map("plan_expires_At")
+  CreatedAt          DateTime  @default(now()) @map("create_at")
+  updatedAt          DateTime  @updatedAt @map("update_at")
+
+  folders Folder[]
+  fileMetadata FileMetadata[]
+}
+
+model Folder {
+  id             String    @id @default(uuid()) @map("id_folder")
+  name           String
+  userId         String    @map("user_id")
+  parentFolderId String?   @map("parent_folder_id")
+  isDeleted      Boolean   @default(false) @map("is_deleted")
+  deletedAt      DateTime? @map("delete_at")
+  createdAt      DateTime  @default(now()) @map("create_at")
+  updatedAt      DateTime  @updatedAt @map("update_at")
+
+  user         User     @relation(fields: [userId], references: [id])
+  parentFolder Folder?  @relation("FolderToFolder", fields: [parentFolderId], references: [id])
+  subFolders   Folder[] @relation("FolderToFolder")
+
+  fileMetadata FileMetadata[]
+}
+
+model IpfsObject {
+  id             String    @id @default(uuid()) @map("id_ipfs_object")
+  cid            String    @unique
+  sizeBytes      BigInt    @map("size_bytes")
+  mimeType       String    @map("mime_type")
+  replicasCount  Int       @default(0) @map("replicas_count")
+  r2Key String? @unique @map("r2_key")
+  r2StoredAt     DateTime? @map("r2_stored_at")
+  lastAccessedAt DateTime? @map("last_accessed_at")
+  accessCount    Int       @default(0) @map("access_count")
+  nodePins       String[]  @map("node_pins")
+  createdAt      DateTime  @default(now()) @map("create_at")
+
+  fileMetadata FileMetadata[]
+  storageContract StorageContract?
+  accessLogs AccessLog[]
+}
+
+model FileMetadata {
+  id           String    @id @default(uuid()) @map("id_file_metadata")
+  name         String
+  userId       String    @map("user_id")
+  folderId     String?   @map("folder_id")
+  ipfsObjectId String    @map("ipfs_object_id")
+  isDeleted    Boolean   @default(false) @map("is_deleted")
+  deletedAt    DateTime? @map("deleted_at")
+  createdAt    DateTime  @default(now()) @map("create_at")
+  updatedAt    DateTime  @updatedAt @map("update_at")
+
+  user       User       @relation(fields: [userId], references: [id])
+  folder     Folder?    @relation(fields: [folderId], references: [id])
+  ipfsObject IpfsObject @relation(fields: [ipfsObjectId], references: [id])
+}
+
+model StorageContract {
+  id            String      @id @default(uuid()) @map("id_storage_contract")
+  ipfsObjectId  String      @unique @map("ipfs_object_id")
+  crustStatus   String      @default("pending") @map("crust_status")
+  txHash        String?     @map("tx_hash")
+  pinnedUntil   DateTime?   @map("pinned_until")
+  renewalAt     DateTime?   @map("renewal_at")
+  crustFeePaid  BigInt?     @map("crust_fee_paid")
+  replicaCount  Int?        @map("replica_count")
+  fileSizeBytes BigInt?     @map("file_size_bytes")
+  createdAt     DateTime    @default(now()) @map("create_at")
+  updatedAt     DateTime    @updatedAt @map("update_at")
+
+  ipfsObject IpfsObject @relation(fields: [ipfsObjectId], references: [id])
+}
+
+model AccessLog {
+  id           String   @id @default(uuid())
+  ipfsObjectId String   @map("ipfs_object_id")
+  accessedAt   DateTime @default(now()) @map("accessed_at")
+  gateway      String
+  cacheHit     Boolean  @map("cache_hit")
+
+  ipfsObject IpfsObject @relation(fields: [ipfsObjectId], references: [id])
+
+  @@index([ipfsObjectId])
+  @@index([accessedAt])
 }
