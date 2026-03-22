@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
 	"path"
-	"path/filepath"
+
+	//	"path/filepath"
 
 	"ipfs-gestion-archivos/internal/api"
 	"ipfs-gestion-archivos/internal/ipfs"
@@ -54,7 +54,7 @@ func TransferR2ToIPFS(client *s3.Client, bucketName string, objectKey string) er
 	go func() {
 
 		nombreLimpio := path.Base(objectKey)
-		rutaTemporal := filepath.Join("/tmp", nombreLimpio)
+		//	rutaTemporal := filepath.Join("/tmp", nombreLimpio)
 
 		out, err := client.GetObject(context.TODO(), &s3.GetObjectInput{
 			Bucket: aws.String(bucketName),
@@ -69,31 +69,38 @@ func TransferR2ToIPFS(client *s3.Client, bucketName string, objectKey string) er
 
 		defer out.Body.Close()
 
-		archivoLocal, err := os.Create(rutaTemporal)
-		if err != nil {
-			log.Printf("Error creando archivo temporal: %v", err)
-			return
-		}
+		/*
+			archivoLocal, err := os.Create(rutaTemporal)
+			if err != nil {
+				log.Printf("Error creando archivo temporal: %v", err)
+				return
+			}
 
-		log.Printf("Descargando %s a disco temporal...", nombreLimpio)
-		_, err = io.Copy(archivoLocal, out.Body)
-		archivoLocal.Close()
-		if err != nil {
-			log.Printf("Error guardando el archivo temporal: %v", err)
-			return
-		}
+			log.Printf("Descargando %s a disco temporal...", nombreLimpio)
+			_, err = io.Copy(archivoLocal, out.Body)
+			archivoLocal.Close()
+			if err != nil {
+				log.Printf("Error guardando el archivo temporal: %v", err)
+				return
+			}
 
-		archivoParaIPFS, err := os.Open(rutaTemporal)
-		if err != nil {
-			log.Printf("Error abriendo archivo local para IPFS: %v", err)
-			return
-		}
-		defer archivoParaIPFS.Close()
+			archivoParaIPFS, err := os.Open(rutaTemporal)
+			if err != nil {
+				log.Printf("Error abriendo archivo local para IPFS: %v", err)
+				return
+			}
+			defer archivoParaIPFS.Close()
 
-		log.Printf("Archido descargado. Iniciando inyección a IPFS...")
-		kuboRespuesta, err := ipfs.SubirArchivo(archivoParaIPFS, nombreLimpio)
+			log.Printf("Archido descargado. Iniciando inyección a IPFS...")
+			kuboRespuesta, err := ipfs.SubirArchivo(archivoParaIPFS, nombreLimpio)
 
-		os.Remove(rutaTemporal)
+			os.Remove(rutaTemporal)
+
+		*/
+
+		// Por esto:
+		log.Printf("Iniciando stream directo R2 → IPFS para: %s", nombreLimpio)
+		kuboRespuesta, err := ipfs.SubirArchivo(out.Body, nombreLimpio)
 
 		if err != nil {
 			fmt.Printf("Error FALTAl subiendo el archivo a ipfs: %v", err)
