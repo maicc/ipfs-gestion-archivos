@@ -23,8 +23,8 @@ RUN npm install --only=production
 RUN npm install -g @crustio/crust-cli
 
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/src/generated ./src/generated  # 👈 agregar esto
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma  # 👈 y esto
+COPY --from=builder /app/src/generated ./src/generated
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 EXPOSE 3000
 
