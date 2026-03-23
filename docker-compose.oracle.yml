@@ -13,8 +13,6 @@ services:
       - "3000:3000"
     env_file:
       - .env
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
     restart: unless-stopped
     networks:
       - red_compartida
