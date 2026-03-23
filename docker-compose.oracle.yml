@@ -14,3 +14,9 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+    networks:
+      - red_compartida
+
+networks:
+  red_compartida:
+    external: true
