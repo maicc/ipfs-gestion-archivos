@@ -53,5 +53,3 @@ jobs:
 
             docker compose -f docker-compose.oracle.yml up -d --build # Solo reinicia este servicio
             docker image prune -f
-
-              docker exec oguripfs-backend sh -c "DATABASE_URL='${{ secrets.DATABASE_URL }}' npx prisma migrate deploy"
