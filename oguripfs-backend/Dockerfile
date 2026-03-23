@@ -14,15 +14,17 @@ RUN npm run build
 
 FROM node:20-alpine
 
-WORKDIR  /app
+WORKDIR /app
 
-COPY package*.json ./ 
+COPY package*.json ./
 
 RUN npm install --only=production
 
 RUN npm install -g @crustio/crust-cli
 
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/src/generated ./src/generated  # 👈 agregar esto
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma  # 👈 y esto
 
 EXPOSE 3000
 
