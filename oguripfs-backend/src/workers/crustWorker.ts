@@ -17,7 +17,7 @@ export const crustWorker = async () => {
     });
 
     if (huerfanos.length > 0) {
-        const ids = huerfanos.map((h) => h.id);
+        const ids = huerfanos.map((h: any) => h.id);
 
         // Primero borrar FileMetadata que apuntan a estos objetos
         await prisma.fileMetadata.deleteMany({

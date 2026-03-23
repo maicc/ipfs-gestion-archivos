@@ -18,7 +18,7 @@ export const getFilesService = async (userId: string) => {
     },
   });
 
-  return files.map((file) => ({
+  return files.map((file: any) => ({
     id: file.id,
     name: file.name,
     folderId: file.folderId,
