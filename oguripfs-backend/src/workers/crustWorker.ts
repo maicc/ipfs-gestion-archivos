@@ -7,9 +7,45 @@ import { getOrderStateCLI } from "../utils/crustCLI.js";
 export const crustWorker = async () => {
     console.log("🔄 Worker Crust: iniciando ciclo de verificación...");
 
+    // Limpiar pending huérfanos de más de 1 hora
+    const huerfanos = await prisma.ipfsObject.findMany({
+        where: {
+            cid: { startsWith: "pending_" },
+            createdAt: { lt: new Date(Date.now() - 60 * 60 * 1000) },
+        },
+        select: { id: true },
+    });
+
+    if (huerfanos.length > 0) {
+        const ids = huerfanos.map((h) => h.id);
+
+        // Primero borrar FileMetadata que apuntan a estos objetos
+        await prisma.fileMetadata.deleteMany({
+            where: { ipfsObjectId: { in: ids } },
+        });
+
+        // Luego borrar los IpfsObjects
+        await prisma.ipfsObject.deleteMany({
+            where: { id: { in: ids } },
+        });
+
+        console.log(`🧹 Limpiados ${huerfanos.length} pending huérfanos`);
+    }
     // 1. Buscar contratos pendientes
+    // Buscar contratos pendientes Y activos no chequeados en 1 hora
     const contratosPendientes = await prisma.storageContract.findMany({
-        where: { crustStatus: "pending" },
+        where: {
+            OR: [
+                { crustStatus: "pending" },
+                {
+                    crustStatus: "active",
+                    OR: [
+                        { lastCheckedAt: null },
+                        { lastCheckedAt: { lt: new Date(Date.now() - 60 * 60 * 1000) } },
+                    ],
+                },
+            ],
+        },
         include: { ipfsObject: true },
     });
 
@@ -49,8 +85,9 @@ export const crustWorker = async () => {
                     data: {
                         crustStatus: "active",
                         replicaCount,
+                        lastCheckedAt: new Date(), // 👈 agregar esto
                         pinnedUntil: expiredAt > 0 ? new Date(expiredAt * 1000) : null,
-                        renewalAt: expiredAt > 0 ? new Date((expiredAt - 172800) * 1000) : null, // 2 días antes
+                        renewalAt: expiredAt > 0 ? new Date((expiredAt - 172800) * 1000) : null,
                     },
                 });
 
@@ -97,6 +134,10 @@ export const crustWorker = async () => {
 
                 console.log(`✅ Contrato actualizado a active para CID: ${cid}`);
             } else {
+                await prisma.storageContract.update({
+                    where: { id: contrato.id },
+                    data: { lastCheckedAt: new Date() }, // 👈 agregar esto
+                });
                 console.log(`⏳ Crust aún procesando CID: ${cid}`);
             }
         } catch (error) {

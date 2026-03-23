@@ -91,6 +91,7 @@ model StorageContract {
   fileSizeBytes BigInt?     @map("file_size_bytes")
   createdAt     DateTime    @default(now()) @map("create_at")
   updatedAt     DateTime    @updatedAt @map("update_at")
+  lastCheckedAt DateTime? @map("last_checked_at")
 
   ipfsObject IpfsObject @relation(fields: [ipfsObjectId], references: [id])
 }
