@@ -27,4 +27,4 @@ COPY prisma ./prisma
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "DATABASE_URL=$DATABASE_URL npx prisma migrate deploy && node dist/server.js"]
+CMD ["node", "dist/server.js"]
