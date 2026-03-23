@@ -6,6 +6,7 @@ COPY package*.json ./
 RUN npm install
 
 COPY prisma ./prisma
+COPY prisma.config.ts ./
 RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npx prisma generate
 
 COPY . .
@@ -24,8 +25,9 @@ RUN apk add --no-cache python3 make g++ && \
 COPY --from=builder /app/dist ./dist
 
 COPY prisma ./prisma
+COPY prisma.config.ts ./
 
-RUN npx prisma generate
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npx prisma generate
 
 EXPOSE 3000
 
