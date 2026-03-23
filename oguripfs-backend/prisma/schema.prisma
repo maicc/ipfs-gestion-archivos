@@ -5,6 +5,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  url      = env("DATABASE_URL")
  // output   = "../src/generated/prisma"
 }
 
