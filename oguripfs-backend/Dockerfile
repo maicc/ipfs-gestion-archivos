@@ -22,8 +22,10 @@ RUN apk add --no-cache python3 make g++ && \
     npm install -g @crustio/crust-cli
 
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/src/generated ./src/generated
+
 COPY prisma ./prisma
+
+RUN npx prisma generate
 
 EXPOSE 3000
 
