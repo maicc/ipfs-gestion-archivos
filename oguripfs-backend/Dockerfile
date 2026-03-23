@@ -20,7 +20,8 @@ COPY package*.json ./
 
 RUN npm install --only=production
 
-RUN npm install -g @crustio/crust-cli
+RUN apk add --no-cache python3 make g++ && \
+    npm install -g @crustio/crust-cli
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/src/generated ./src/generated
