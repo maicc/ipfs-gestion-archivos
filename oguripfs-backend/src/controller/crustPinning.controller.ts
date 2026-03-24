@@ -4,30 +4,6 @@ import { FileDataPayload } from '../types/index.js';
 
 export const confirmarSubidaController = async (req: Request, res: Response) => {
     console.log("Body recibido:", JSON.stringify(req.body, null, 2));
-    /* 
-    const {
-        keyR2,
-        respuestaKubo: {
-            name,
-            cid,
-            size
-        }
-    } = req.body;
-
-    if (!keyR2 || !respuestaKubo?.cid || !name || !size) {
-        return res.status(400).json({ error: "Faltaron datos de Go" });
-    }
-
-    const fileInfoSanitizado: FileDataPayload = {
-       keyR2,
-        respuestaKubo: {
-            name,
-            cid,
-            size
-        }
-    }
-        
-*/
 
 const { keyR2, respuestaKubo } = req.body;
 
