@@ -48,6 +48,7 @@ jobs:
             echo "R2_BUCKET_NAME=${{ secrets.R2_BUCKET_NAME }}" >> .env
             echo "GERMANY_HOST=${{ secrets.GERMANY_HOST }}" >> .env
             echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+            echo "INTERNAL_SECRET=${{ secrets.INTERNAL_SECRET }}" >> .env
 
             docker compose -f docker-compose.oracle.yml down
 

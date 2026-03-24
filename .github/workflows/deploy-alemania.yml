@@ -42,7 +42,8 @@ jobs:
             echo "R2_ACCESS_KEY_ID=${{ secrets.R2_ACCESS_KEY_ID }}" >> .env
             echo "R2_SECRET_ACCESS_KEY=${{ secrets.R2_SECRET_ACCESS_KEY }}" >> .env
             echo "R2_BUCKET_NAME=${{ secrets.R2_BUCKET_NAME }}" >> .env
-
+            echo "INTERNAL_SECRET=${{ secrets.INTERNAL_SECRET }}" >> .env
+            
             # Le decimos a Docker que SOLO reconstruya el contenedor de Go, dejando a IPFS en paz
             docker compose -f docker-compose.alemania.yml up -d --build go-backend
             docker image prune -f
