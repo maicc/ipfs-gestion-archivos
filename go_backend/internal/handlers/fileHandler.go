@@ -31,53 +31,51 @@ func FileHandler(clienteR2 *s3.Client) http.HandlerFunc {
 			return
 		}
 
-		// ------------------------------------------------------------------
-		// ⚡ PASO 4: LA BIFURCACIÓN (IPFS GATEWAY vs CLOUDFLARE R2)
-		// ------------------------------------------------------------------
+		fmt.Printf("CID %s tiene %d réplicas. Sirviendo desde Gateway IPFS...\n", metadata.CID, metadata.ReplicasCount)
 
-		// CASO A: ¡Tiene 1 o más réplicas en IPFS!
-
-		fmt.Printf("CID %s tiene %d réplicas. Redirigiendo al Gateway IPFS...\n", metadata.CID, metadata.ReplicasCount)
-
-		// Usamos la conexión con el nodo directa
 		gatewayURL := fmt.Sprintf("http://127.0.0.1:8080/ipfs/%s?filename=%s", metadata.CID, metadata.Name)
 
-		// Hacemos que el navegador del usuario salte hacia IPFS (ahorro de ancho de banda al 100%)
-		// 1. Go va y le toca la puerta al Gateway en secreto
-		resp, err := http.Get(gatewayURL)
+		// ✅ Crear request manual para pasar el Range header
+		ipfsReq, err := http.NewRequest("GET", gatewayURL, nil)
+		if err != nil {
+			http.Error(w, "Error creando request", http.StatusInternalServerError)
+			return
+		}
+
+		// ✅ Pasar el Range header si el browser lo envía (seeking de video)
+		if rangeHeader := r.Header.Get("Range"); rangeHeader != "" {
+			ipfsReq.Header.Set("Range", rangeHeader)
+		}
+
+		client := &http.Client{}
+		resp, err := client.Do(ipfsReq)
 		if err != nil {
 			fmt.Printf("Error conectando al Gateway: %v\n", err)
-			http.Error(w, "Error obteniendo el archivo de la red descentralizada", http.StatusInternalServerError)
+			http.Error(w, "Error obteniendo el archivo", http.StatusInternalServerError)
 			return
 		}
 		defer resp.Body.Close()
 
-		if resp.StatusCode != http.StatusOK {
-			fmt.Printf("El Gateway devolvió error: %d\n", resp.StatusCode)
-			http.Error(w, "Error leyendo de la red descentralizada", http.StatusInternalServerError)
-			return
-		}
-
-		// 2. Preparamos los Headers (igual que con R2)
+		// ✅ Headers de respuesta
 		if metadata.Name != "" {
 			w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s"`, metadata.Name))
 		}
 		if metadata.MimeType != "" {
 			w.Header().Set("Content-Type", metadata.MimeType)
 		}
-		if metadata.Size > 0 {
-			w.Header().Set("Content-Length", fmt.Sprintf("%d", metadata.Size))
+		// ✅ Pasar Content-Range y Accept-Ranges desde IPFS al browser
+		if cr := resp.Header.Get("Content-Range"); cr != "" {
+			w.Header().Set("Content-Range", cr)
 		}
-		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Accept-Ranges", "bytes")
+		w.Header().Set("Content-Length", fmt.Sprintf("%d", resp.ContentLength))
 
-		// 3. 🌊 EL STREAMING MAGICO
-		// Go pasa los bytes del Gateway al usuario sin gastar tu RAM y sin cambiar la URL
+		// ✅ Usar el status code real de IPFS (200 o 206)
+		w.WriteHeader(resp.StatusCode)
+
 		_, err = io.Copy(w, resp.Body)
 		if err != nil {
-			fmt.Printf("Error durante el streaming desde IPFS al usuario: %v\n", err)
+			fmt.Printf("Error durante streaming: %v\n", err)
 		}
-		// 🚨 Super importante este return para que no siga al Caso B
-
 	}
-
 }
