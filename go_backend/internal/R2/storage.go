@@ -69,35 +69,6 @@ func TransferR2ToIPFS(client *s3.Client, bucketName string, objectKey string) er
 
 		defer out.Body.Close()
 
-		/*
-			archivoLocal, err := os.Create(rutaTemporal)
-			if err != nil {
-				log.Printf("Error creando archivo temporal: %v", err)
-				return
-			}
-
-			log.Printf("Descargando %s a disco temporal...", nombreLimpio)
-			_, err = io.Copy(archivoLocal, out.Body)
-			archivoLocal.Close()
-			if err != nil {
-				log.Printf("Error guardando el archivo temporal: %v", err)
-				return
-			}
-
-			archivoParaIPFS, err := os.Open(rutaTemporal)
-			if err != nil {
-				log.Printf("Error abriendo archivo local para IPFS: %v", err)
-				return
-			}
-			defer archivoParaIPFS.Close()
-
-			log.Printf("Archido descargado. Iniciando inyección a IPFS...")
-			kuboRespuesta, err := ipfs.SubirArchivo(archivoParaIPFS, nombreLimpio)
-
-			os.Remove(rutaTemporal)
-
-		*/
-
 		// Por esto:
 		log.Printf("Iniciando stream directo R2 → IPFS para: %s", nombreLimpio)
 		kuboRespuesta, err := ipfs.SubirArchivo(out.Body, nombreLimpio)

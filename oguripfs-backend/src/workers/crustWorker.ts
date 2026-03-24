@@ -79,6 +79,9 @@ export const crustWorker = async () => {
             console.log(`📦 CID: ${cid} | Réplicas: ${replicaCount} | Expired at: ${expiredAt}`);
 
             if (replicaCount > 0) {
+
+                const esPrimerCobro = contrato.crustStatus !== "active";
+
                 // Crust confirmó el pin — actualizar DB
                 await prisma.storageContract.update({
                     where: { id: contrato.id },
@@ -91,6 +94,7 @@ export const crustWorker = async () => {
                     },
                 });
 
+                if (esPrimerCobro){ 
                 // Actualizar storage usado del usuario
                 const fileMetadata = await prisma.fileMetadata.findFirst({
                     where: { ipfsObjectId: contrato.ipfsObjectId },
@@ -106,8 +110,11 @@ export const crustWorker = async () => {
                             },
                         },
                     });
+                    console.log(`✅ ¡Cobro de ${contrato.ipfsObject.sizeBytes} bytes aplicado por primera vez!`);
                 }
-
+                } else{
+                    console.log(`Contrato ${cid} ya estaba activo, no se vuelve a cobrar.`)
+                }
 
                 await prisma.ipfsObject.update({
                     where: { id: contrato.ipfsObjectId },
