@@ -45,3 +45,12 @@ type PayloadNew struct {
 type OrdenExterminio struct {
 	CID string `json:"cid"`
 }
+
+type FileMetadata struct {
+	CID           string `json:"cid"`
+	Name          string `json:"name"`
+	MimeType      string `json:"mimeType"`
+	Size          int64  `json:"size"`
+	ReplicasCount int    `json:"replicas"`
+	R2Key         string `json:"r2Key"`
+}

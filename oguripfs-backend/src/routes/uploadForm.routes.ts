@@ -9,6 +9,8 @@ import { getFileStatusController } from "../controller/getFileStatus.controller.
 import { deleteFileController } from "../controller/deleteFile.controller.js";
 import { getPublicFileController } from "../controller/getPublicFile.controller.js";
 import { getAdminStatsController } from "../controller/admin.controller.js";
+import { sharedFileController, unSharedFileController, resolveIntervalTokenController } from "../controller/sharedFiles.controller.js";
+import { internalAuthMiddleware } from "../middlewares/InternarAuth.middleware.js";
 
 
 const router = Router();
@@ -26,5 +28,10 @@ router.delete("/file/:cid", authMiddleware, deleteFileController);
 router.get("/public/:cid", getPublicFileController);
 
 router.get("/admin/stats", authMiddleware, getAdminStatsController);
+
+router.post("/file/:cid/share", authMiddleware, sharedFileController)
+router.delete("/file/:cid/share", authMiddleware, unSharedFileController)
+
+router.get("/internal/resolve/:token", internalAuthMiddleware, resolveIntervalTokenController)
 
 export default router;

@@ -5,7 +5,7 @@
 
 generator client {
   provider = "prisma-client-js"
- // output   = "../src/generated/prisma"
+  // output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -24,7 +24,7 @@ model User {
   CreatedAt          DateTime  @default(now()) @map("create_at")
   updatedAt          DateTime  @updatedAt @map("update_at")
 
-  folders Folder[]
+  folders      Folder[]
   fileMetadata FileMetadata[]
 }
 
@@ -51,20 +51,21 @@ model IpfsObject {
   sizeBytes      BigInt    @map("size_bytes")
   mimeType       String    @map("mime_type")
   replicasCount  Int       @default(0) @map("replicas_count")
-  r2Key String? @unique @map("r2_key")
+  r2Key          String?   @unique @map("r2_key")
   r2StoredAt     DateTime? @map("r2_stored_at")
   lastAccessedAt DateTime? @map("last_accessed_at")
   accessCount    Int       @default(0) @map("access_count")
   nodePins       String[]  @map("node_pins")
   createdAt      DateTime  @default(now()) @map("create_at")
 
-  fileMetadata FileMetadata[]
+  fileMetadata    FileMetadata[]
   storageContract StorageContract?
-  accessLogs AccessLog[]
+  accessLogs      AccessLog[]
 }
 
 model FileMetadata {
   id           String    @id @default(uuid()) @map("id_file_metadata")
+  shareToken   String?   @unique @map("share_token")
   name         String
   userId       String    @map("user_id")
   folderId     String?   @map("folder_id")
@@ -80,17 +81,17 @@ model FileMetadata {
 }
 
 model StorageContract {
-  id            String      @id @default(uuid()) @map("id_storage_contract")
-  ipfsObjectId  String      @unique @map("ipfs_object_id")
-  crustStatus   String      @default("pending") @map("crust_status")
-  txHash        String?     @map("tx_hash")
-  pinnedUntil   DateTime?   @map("pinned_until")
-  renewalAt     DateTime?   @map("renewal_at")
-  crustFeePaid  BigInt?     @map("crust_fee_paid")
-  replicaCount  Int?        @map("replica_count")
-  fileSizeBytes BigInt?     @map("file_size_bytes")
-  createdAt     DateTime    @default(now()) @map("create_at")
-  updatedAt     DateTime    @updatedAt @map("update_at")
+  id            String    @id @default(uuid()) @map("id_storage_contract")
+  ipfsObjectId  String    @unique @map("ipfs_object_id")
+  crustStatus   String    @default("pending") @map("crust_status")
+  txHash        String?   @map("tx_hash")
+  pinnedUntil   DateTime? @map("pinned_until")
+  renewalAt     DateTime? @map("renewal_at")
+  crustFeePaid  BigInt?   @map("crust_fee_paid")
+  replicaCount  Int?      @map("replica_count")
+  fileSizeBytes BigInt?   @map("file_size_bytes")
+  createdAt     DateTime  @default(now()) @map("create_at")
+  updatedAt     DateTime  @updatedAt @map("update_at")
   lastCheckedAt DateTime? @map("last_checked_at")
 
   ipfsObject IpfsObject @relation(fields: [ipfsObjectId], references: [id])

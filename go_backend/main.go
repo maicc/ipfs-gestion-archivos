@@ -12,7 +12,7 @@ import (
 
 func main() {
 	godotenv.Load()
-	fmt.Println("🚀 Servidor IPFS-Engine iniciado en el puerto 8080...")
+	fmt.Println("🚀 Servidor IPFS-Engine iniciado en el puerto 8082...")
 
 	clienteR2, error := storage.InitR2Client()
 	if error != nil {
@@ -22,7 +22,9 @@ func main() {
 	// Maneja las rutas, apuntando a tu paquete handlers
 	http.HandleFunc("/upload", handlers.ManejarUpload)
 	http.HandleFunc("/uploadR2", handlers.ManejarUploadR2(clienteR2))
-
+	http.HandleFunc("/f/", func(w http.ResponseWriter, r *http.Request) {
+		handlers.FileHandler(clienteR2)(w, r)
+	})
 	// Inicia el server
 	err := http.ListenAndServe(":8082", nil)
 	if err != nil {

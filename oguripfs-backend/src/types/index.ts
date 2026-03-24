@@ -1,3 +1,5 @@
+import { Request } from 'express';
+
 export interface ChunkInfo {
     filename: string;
     originalName: string;
@@ -51,4 +53,10 @@ export interface FileDataPayload {
 export interface MultipartPart {
     PartNumber: number;
     ETag: string;
+}
+
+export interface CustomRequest extends Request {
+    user?: {
+        id: string;
+    }
 }
