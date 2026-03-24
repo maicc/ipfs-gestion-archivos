@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-// SubirArchivo streamea un archivo físico directamente a tu nodo Kubo local
+// SubirArchivo streamea un archivo físico directamente a tu nodo Kubo loca
 func SubirArchivo(archivoR2 io.Reader, nombreArchivo string) (models.RespuestaKubo, error) {
 	urlbase := os.Getenv("IPFS_URL")
 	if urlbase == "" {
