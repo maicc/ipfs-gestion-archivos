@@ -3,7 +3,7 @@ services:
     build: ./oguripfs-frontend
     container_name: frontend-prueba
     ports: 
-      - "81:5173"
+      - "81:3000"
     restart: unless-stopped
 
   oguripfs-backend:
