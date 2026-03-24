@@ -87,7 +87,7 @@ export const confirmarSubida = async (fileInfo: FileDataPayload) => {
 export async function placeStorageOrder(
     cid: string,
     fileSize: number,
-    tips: number = 0,
+    tips: number = 1000000000,
     memo: string = ''
 ): Promise<CrustOrderResult> {
     const crustApi = await initCrustApi();
