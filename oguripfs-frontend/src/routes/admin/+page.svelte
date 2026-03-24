@@ -61,7 +61,7 @@
           <p class="text-xs text-gray-400 mt-2">Total de cuentas creadas</p>
         </div>
 
-        <!-- Storage usado -->
+        <!-- Storage usado  a--> 
         <div class="bg-white border border-gray-200 rounded-2xl p-6">
           <p class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Almacenamiento usado</p>
           <p class="text-4xl font-black text-gray-900">{formatBytes(stats.totalStorageUsedBytes)}</p>
