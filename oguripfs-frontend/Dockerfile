@@ -13,6 +13,6 @@ COPY --from=builder /app/build ./build
 COPY --from=builder /app/package*.json ./
 # Instalamos solo las dependencias de producción para mantener la imagen ligera
 RUN npm ci --omit=dev
-EXPOSE 80
+EXPOSE 5173
 # Comando para iniciar la app
 CMD ["node", "build"]
