@@ -40,7 +40,7 @@ func FileHandler(clienteR2 *s3.Client) http.HandlerFunc {
 		fmt.Printf("CID %s tiene %d réplicas. Redirigiendo al Gateway IPFS...\n", metadata.CID, metadata.ReplicasCount)
 
 		// Usamos la conexión con el nodo directa
-		gatewayURL := fmt.Sprintf("http://ipfs_nodo:8080/ipfs/%s?filename=%s", metadata.CID, metadata.Name)
+		gatewayURL := fmt.Sprintf("http://ipfs_node:8080/ipfs/%s?filename=%s", metadata.CID, metadata.Name)
 
 		// Hacemos que el navegador del usuario salte hacia IPFS (ahorro de ancho de banda al 100%)
 		// 1. Go va y le toca la puerta al Gateway en secreto
