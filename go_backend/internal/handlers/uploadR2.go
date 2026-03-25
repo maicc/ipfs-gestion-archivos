@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	// importa el paquete donde tengas tu función TransferR2ToIPFS si no está aquí
 )
 
 // Definimos lo que esperamos recibir de TypeScript
@@ -35,15 +34,11 @@ func ManejarUploadR2(clienteR2 *s3.Client) http.HandlerFunc {
 		// 3. Obtenemos el nombre del bucket de tus variables de entorno
 		bucketName := os.Getenv("R2_BUCKET_NAME")
 
-		// 4. ¡LA CONEXIÓN MÁGICA!
-		// Ejecutamos tu función de transferencia en una goroutine (en segundo plano)
-		// para poder responderle a TypeScript un "OK" inmediatamente.
 		go func() {
 			err := storage.TransferR2ToIPFS(clienteR2, bucketName, body.KeyR2)
 			if err != nil {
 				fmt.Println("Error catastrófico en la transferencia:", err)
-				// Ojo: tu función TransferR2ToIPFS ya tiene adentro la lógica
-				// para notificar a TS si todo salió bien (la NotificarBackendTS)
+
 			}
 		}()
 

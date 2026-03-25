@@ -14,10 +14,6 @@ import (
 	"strings"
 	"time"
 
-	/*
-		"ipfs-gestion-archivos/internal/api"
-		"ipfs-gestion-archivos/internal/ipfs"
-	*/
 	"ipfs-gestion-archivos/internal/models"
 )
 
@@ -157,21 +153,6 @@ func ensamblarArchivo(finalname string, fileBasicInfo models.FileBasicInfo) {
 		os.RemoveAll(rutaCompleta)
 	}
 
-	// ✨ AQUI ESTÁ LA MAGIA DE LA ARQUITECTURA ✨
-	/* respuestaKubo, errIPFS := ipfs.SubirArchivo(rutaCompleta)
-	if errIPFS != nil {
-		fmt.Println("Fallo crítico al subir a IPFS:", errIPFS)
-		return
-	}
-
-	fmt.Println("2. Archivo pineado con exito. Notificando a la API en TypeScript...")
-
-	errNotificacion := api.NotificarBackendTS(finalname, fileBasicInfo.OriginalName, fileBasicInfo.MimeType, respuestaKubo)
-	if errNotificacion != nil {
-		fmt.Println("Fallo de comunicación con TS:", errNotificacion)
-		return
-	}
-	*/
 	fmt.Println("3. TypeScript confirmó la recepción del CID.")
 	os.RemoveAll(carpetaTemp)
 	fmt.Println("Ensamblaje finalizado y basura temporal destruida con exito.")

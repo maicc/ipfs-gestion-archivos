@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"ipfs-gestion-archivos/internal/models" // Cambia "oguripfs-backend" si tu go.mod se llama diferente
+	"ipfs-gestion-archivos/internal/models"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
@@ -166,7 +166,7 @@ func SubirCarpetaAIPFS(rutaCarpeta string) (models.RespuestaKubo, error) {
 		var temp models.RespuestaKubo
 		err := decoder.Decode(&temp)
 		if err == io.EOF {
-			break // Ya no hay más respuestas, terminamos de leer
+			break
 		}
 		if err != nil {
 			return models.RespuestaKubo{}, fmt.Errorf("error leyendo respuesta de Kubo: %v", err)
